@@ -5,7 +5,7 @@ use anchor_spl::{
 };
 use constant_product_curve::ConstantProduct;
 
-use crate::{state::Config,error::AmmError};
+use crate::{error::AmmError, state::Config};
 
 #[derive(Accounts)]
 #[instruction(seed:u64)]
@@ -74,25 +74,34 @@ impl<'info> Deposit<'info> {
         // amount is the number of lp tokens user wants
         // max_x is the number of x type tokens user is willing to deposit
         // max_y is the number of y type tokens user is willing to deposit
-        require!(self.config.locked==false,AmmError::PoolLocked);
-        require!(amount!=0,AmmError::InvalidAmount);
-        
-        let(x,y)=match self.mint_lp.supply==0 && self.vault_x.amount==0 && self.vault_y.amount==0 {
-            true=>(max_x,max_y), // user is first lp
+        require!(self.config.locked == false, AmmError::PoolLocked);
+        require!(amount != 0, AmmError::InvalidAmount);
+
+        let (x, y) = match self.mint_lp.supply == 0
+            && self.vault_x.amount == 0
+            && self.vault_y.amount == 0
+        {
+            true => (max_x, max_y), // user is first lp
             false => {
-                let amount= ConstantProduct::xy_deposit_amounts_from_l(self.vault_x.amount, self.vault_y.amount, self.mint_lp.supply, amount, 6).unwrap();
-                (amount.x,amount.y)
+                let amount = ConstantProduct::xy_deposit_amounts_from_l(
+                    self.vault_x.amount,
+                    self.vault_y.amount,
+                    self.mint_lp.supply,
+                    amount,
+                    6,
+                )
+                .unwrap();
+                (amount.x, amount.y)
             }
         };
 
-        require!(x<=max_x && y<=max_y,AmmError::SlippageExceeded);
+        require!(x <= max_x && y <= max_y, AmmError::SlippageExceeded);
 
         self.deposit_tokens(true, x)?;
         self.deposit_tokens(false, y)?;
 
         self.mint_lp_tokens(amount)
     }
-
 
     pub fn deposit_tokens(&mut self, is_x: bool, amount: u64) -> Result<()> {
         let (from, to) = match is_x {
@@ -117,7 +126,7 @@ impl<'info> Deposit<'info> {
         Ok(())
     }
 
-        pub fn mint_lp_tokens(&self, amount: u64) -> Result<()> {
+    pub fn mint_lp_tokens(&self, amount: u64) -> Result<()> {
         let seeds = &[
             &b"config"[..],
             &self.config.seed.to_le_bytes(),
