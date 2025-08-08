@@ -39,7 +39,7 @@ pub struct Initialize<'info>{
     pub token_program: Interface<'info, TokenInterface>, // Required for token operations
 }
 
-impl <'info> Initialize<'info> {
+impl<'info> Initialize<'info> {
     // Initialize the marketplace with provided configuration
     pub fn init(&mut self, name: String, fee: u16, bumps: &InitializeBumps) -> Result<()>{
         // Set marketplace account data
