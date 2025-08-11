@@ -20,7 +20,7 @@ pub struct InitLandlord<'info> {
         mint::decimals=0,
         mint::authority=landlord,
         mint::freeze_authority=landlord,
-        seeds=[b"collection_mint",landlord.key().as_ref()],
+        seeds=[b"collection_mint".as_ref(),landlord.key().as_ref()],
         bump,
     )]
     pub collection_mint: InterfaceAccount<'info, Mint>,
@@ -62,9 +62,9 @@ pub struct InitLandlord<'info> {
 impl<'info> InitLandlord<'info> {
     pub fn mint_master_edition_nft(
         &mut self,
-        name: &str,
-        symbol: &str,
-        uri: &str,
+        name: String,
+        symbol: String,
+        uri: String,
     ) -> Result<()> {
         msg!("Creating Mint account!");
 
@@ -90,9 +90,9 @@ impl<'info> InitLandlord<'info> {
             system_program: self.system_program.to_account_info(),
         };
         let data_v2 = DataV2 {
-            name: name.to_string(),
-            symbol: symbol.to_string(),
-            uri: uri.to_string(),
+            name: name,
+            symbol: symbol,
+            uri: uri,
             seller_fee_basis_points: 0,
             creators: Some(vec![Creator {
                 address: self.landlord.key(),

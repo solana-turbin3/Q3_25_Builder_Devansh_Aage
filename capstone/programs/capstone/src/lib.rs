@@ -9,13 +9,23 @@ pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("3iDSgRSDAgbAryCsroiShmWGJKgS8o5pVmHzeB9UxFU7");
+declare_id!("3ECCL8btDKSnNYEgu15UZca4epL2PdHqDEYdY9UBvmcP");
 
 #[program]
 pub mod capstone {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        initialize::handler(ctx)
+    // pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+    //     initialize::handler(ctx)
+    // }
+
+    pub fn init_landlord(
+        ctx: Context<InitLandlord>,
+        name: String,
+        symbol: String,
+        uri: String,
+    ) -> Result<()> {
+        let _ = ctx.accounts.mint_master_edition_nft(name, symbol, uri);
+        Ok(())
     }
 }

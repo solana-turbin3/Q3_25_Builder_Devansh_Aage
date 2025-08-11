@@ -10,6 +10,6 @@ pub struct Escrow {
     pub min_renter_score: u16, // 2 bytes - Required renter score
     pub cancel_allowed_after: u16, // 2 bytes - In months
     pub cancel_penalty_percent: u8, // 1 byte - % penalty
-    pub edition_mint: Pubkey, // 32 bytes - PDA token account to store edition NFT (i think dont need this)
     pub bump: u8,
+    pub edition_mint_bump: u8,
 }
