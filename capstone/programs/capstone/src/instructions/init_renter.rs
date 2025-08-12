@@ -11,7 +11,7 @@ pub struct InitRenter<'info> {
         init,
         space=8+Renter::INIT_SPACE,
         payer=signer,
-        seeds=[b"renter".as_ref(),signer.key().as_ref()],
+        seeds=[b"renter",signer.key().as_ref()],
         bump
     )]
     pub renter: Account<'info, Renter>,

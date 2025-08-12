@@ -32,7 +32,7 @@ pub struct MakeEscrow<'info> {
         mint::authority=collection_mint,
         mint::freeze_authority=collection_mint,
         mint::token_program=token_program,
-        seeds=[b"edition".as_ref(),collection_mint.key().as_ref()],
+        seeds=[b"edition",collection_mint.key().as_ref()],
         bump
     )]
     pub edition_mint: InterfaceAccount<'info, Mint>,
@@ -66,7 +66,7 @@ pub struct MakeEscrow<'info> {
 
     #[account(
         mut,
-        seeds=[b"collection_mint".as_ref(),landlord.key().as_ref()],
+        seeds=[b"collection_mint",landlord.key().as_ref()],
         bump,
     )]
     pub collection_mint: InterfaceAccount<'info, Mint>,
@@ -107,7 +107,7 @@ impl<'info> MakeEscrow<'info> {
         //To-Do add safety checks if an escrow or agreement already exists
 
         let signer_seeds: &[&[&[u8]]] = &[&[
-            b"collection_mint".as_ref(),
+            b"collection_mint",
             self.landlord.key.as_ref(),
             &[bumps.collection_mint],
         ]];
@@ -121,7 +121,7 @@ impl<'info> MakeEscrow<'info> {
         let mint_cpi_ctx = CpiContext::new_with_signer(
             self.token_program.to_account_info(),
             mint_cpi_accounts,
-            &signer_seeds,
+            signer_seeds,
         );
 
         mint_to(mint_cpi_ctx, 1)?;
@@ -200,6 +200,7 @@ impl<'info> MakeEscrow<'info> {
         min_renter_score: u16,
         cancel_allowed_after: u16,
         cancel_penalty_percent: u8,
+        months: u8,
     ) -> Result<()> {
         self.escrow.set_inner(Escrow {
             landlord: *self.landlord.key,
@@ -211,6 +212,7 @@ impl<'info> MakeEscrow<'info> {
             cancel_penalty_percent,
             bump: bumps.escrow,
             edition_mint_bump: bumps.edition_mint,
+            months,
         });
         Ok(())
     }

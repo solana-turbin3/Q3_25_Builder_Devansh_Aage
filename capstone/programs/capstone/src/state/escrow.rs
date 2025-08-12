@@ -8,7 +8,8 @@ pub struct Escrow {
     pub deposit_amount: u64, // 8 bytes - Security deposit
     pub late_fee_percent: u8, // 1 byte - % late fee
     pub min_renter_score: u16, // 2 bytes - Required renter score
-    pub cancel_allowed_after: u16, // 2 bytes - In months
+    pub months: u8,
+    pub cancel_allowed_after: u16,  // 2 bytes - In months
     pub cancel_penalty_percent: u8, // 1 byte - % penalty
     pub bump: u8,
     pub edition_mint_bump: u8,

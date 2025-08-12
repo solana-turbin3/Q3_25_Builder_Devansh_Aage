@@ -20,7 +20,7 @@ pub struct InitLandlord<'info> {
         mint::decimals=0,
         mint::authority=landlord,
         mint::freeze_authority=landlord,
-        seeds=[b"collection_mint".as_ref(),landlord.key().as_ref()],
+        seeds=[b"collection_mint",landlord.key().as_ref()],
         bump,
     )]
     pub collection_mint: InterfaceAccount<'info, Mint>,
