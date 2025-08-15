@@ -64,6 +64,11 @@ impl<'info> PayFromDeposit<'info> {
             .total_payments
             .checked_add(1)
             .ok_or(ErrorCode::Overflow)?;
+        self.renter.late_payments = self
+            .renter
+            .late_payments
+            .checked_add(1)
+            .ok_or(ErrorCode::Overflow)?;
         Ok(())
     }
 }

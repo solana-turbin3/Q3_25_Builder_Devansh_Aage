@@ -25,7 +25,6 @@ impl<'info> InitRenter<'info> {
             score: 20,
             total_payments: 0,
             late_payments: 0,
-            past_agreements: Vec::new(),
             bump: bumps.renter,
         });
         Ok(())

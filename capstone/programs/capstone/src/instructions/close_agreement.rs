@@ -1,11 +1,14 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{
+    prelude::*,
+    system_program::{transfer, Transfer},
+};
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::{transfer_checked, TransferChecked},
     token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 
-use crate::{Agreement, Renter};
+use crate::{ error::ErrorCode, Agreement, Renter};
 
 #[derive(Accounts)]
 pub struct CloseAgreement<'info> {
@@ -33,7 +36,7 @@ pub struct CloseAgreement<'info> {
     #[account(
         init_if_needed,
         payer=signer,
-         associated_token::mint=edition_mint,
+        associated_token::mint=edition_mint,
         associated_token::token_program=token_program,
         associated_token::authority=landlord
     )]
@@ -45,6 +48,7 @@ pub struct CloseAgreement<'info> {
     pub edition_mint: InterfaceAccount<'info, Mint>,
 
     #[account(
+        mut,
         associated_token::mint=edition_mint,
         associated_token::authority=agreement,
         associated_token::token_program=token_program
@@ -58,6 +62,18 @@ pub struct CloseAgreement<'info> {
 
 impl<'info> CloseAgreement<'info> {
     pub fn close_agreement(&mut self) -> Result<()> {
+        require!(
+            self.signer.key() == self.agreement.renter,
+            ErrorCode::Unauthorized
+        );
+
+        self.transfer_item_nft()?;
+        self.transfer_deposit_fund()?;
+        self.close_nft_vault()?;
+        Ok(())
+    }
+
+    pub fn transfer_item_nft(&mut self) -> Result<()> {
         let signer_seeds: &[&[&[u8]]] = &[&[
             b"agreement",
             self.agreement.renter.as_ref(),
@@ -76,7 +92,39 @@ impl<'info> CloseAgreement<'info> {
             signer_seeds,
         );
         transfer_checked(transfer_nft_cpi, 1, self.edition_mint.decimals)?;
+        msg!("Transferred NFT");
+        Ok(())
+    }
 
+    pub fn transfer_deposit_fund(&mut self) -> Result<()> {
+        let agreement_address = self.agreement.key();
+        let deposit_signer_seeds: &[&[&[u8]]] = &[&[
+            b"deposit",
+            agreement_address.as_ref(),
+            &[self.agreement.deposit_bump],
+        ]];
+
+        let transfer_deposit_fund_accounts = Transfer {
+            from: self.deposit_vault.to_account_info(),
+            to: self.signer.to_account_info(),
+        };
+        let transfer_deposit_fund_cpi = CpiContext::new_with_signer(
+            self.system_program.to_account_info(),
+            transfer_deposit_fund_accounts,
+            deposit_signer_seeds,
+        );
+        transfer(transfer_deposit_fund_cpi, self.deposit_vault.lamports())?;
+        msg!("Transferred deposit SOL!");
+        Ok(())
+    }
+
+    pub fn close_nft_vault(&mut self) -> Result<()> {
+        let signer_seeds: &[&[&[u8]]] = &[&[
+            b"agreement",
+            self.agreement.renter.as_ref(),
+            self.agreement.landlord.as_ref(),
+            &[self.agreement.bump],
+        ]];
         let close_accounts = CloseAccount {
             account: self.nft_vault.to_account_info(),
             authority: self.agreement.to_account_info(),
@@ -87,8 +135,8 @@ impl<'info> CloseAgreement<'info> {
             close_accounts,
             signer_seeds,
         );
-
         close_account(close_acc_cpi)?;
+        msg!("Close Account!");
         Ok(())
     }
 }

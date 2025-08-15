@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     metadata::{burn_nft, BurnNft, Metadata},
-    token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
+    token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
 use crate::Escrow;
@@ -95,22 +95,10 @@ impl<'info> Refund<'info> {
             self.token_metadata_program.to_account_info(),
             burn_nft_accounts,
             signer_seeds,
-        );
+        )
+        .with_remaining_accounts(vec![self.collection_metadata.to_account_info()]);
 
         burn_nft(burn_nft_cpi, Some(*self.collection_metadata.key))?;
-
-        let close_accounts = CloseAccount {
-            account: self.vault.to_account_info(),
-            authority: self.escrow.to_account_info(),
-            destination: self.landlord.to_account_info(),
-        };
-        let close_cpi = CpiContext::new_with_signer(
-            self.token_program.to_account_info(),
-            close_accounts,
-            signer_seeds,
-        );
-
-        close_account(close_cpi)?;
         Ok(())
     }
 }
