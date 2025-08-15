@@ -10,7 +10,7 @@ pub struct Agreement {
     pub rent_amount: u64, // 8 bytes in lamports
     pub deposit_amount: u64, // 8 bytes in lamports
     pub late_fee_percent: u8, // 1 byte
-    pub cancel_allowed_after: u16, // 2 bytes
+    pub cancel_allowed_after: u16, // 2 bytes in months
     pub cancel_penalty_percent: u8, // 1 byte
     pub payments_made: u16, // 2 bytes - Number of successful payments
     pub bump: u8,

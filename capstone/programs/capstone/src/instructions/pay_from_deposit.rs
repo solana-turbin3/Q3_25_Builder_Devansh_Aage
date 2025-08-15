@@ -46,7 +46,18 @@ impl<'info> PayFromDeposit<'info> {
             transfer_accounts,
             signer_seeds,
         );
-        transfer(transfer_cpi, self.agreement.rent_amount)?;
+        let late_rent_fine_fee = self
+            .agreement
+            .rent_amount
+            .checked_mul(u64::from(self.agreement.late_fee_percent))
+            .and_then(|v| v.checked_div(100))
+            .ok_or(ErrorCode::Overflow)?;
+        let total_rent = self
+            .agreement
+            .rent_amount
+            .checked_add(late_rent_fine_fee)
+            .ok_or(ErrorCode::Overflow)?;
+        transfer(transfer_cpi, total_rent)?;
 
         self.agreement.payments_made = self
             .agreement

@@ -6,4 +6,6 @@ pub enum ErrorCode {
     Overflow,
     #[msg("Unauthorized!")]
     Unauthorized,
+    #[msg("Unsufficient funds in deposit!")]
+    DepositFundsLow,
 }

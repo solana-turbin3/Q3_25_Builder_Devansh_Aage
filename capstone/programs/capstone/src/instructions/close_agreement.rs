@@ -8,7 +8,7 @@ use anchor_spl::{
     token_interface::{close_account, CloseAccount, Mint, TokenAccount, TokenInterface},
 };
 
-use crate::{ error::ErrorCode, Agreement, Renter};
+use crate::{error::ErrorCode, Agreement, Renter};
 
 #[derive(Accounts)]
 pub struct CloseAgreement<'info> {
@@ -97,6 +97,28 @@ impl<'info> CloseAgreement<'info> {
     }
 
     pub fn transfer_deposit_fund(&mut self) -> Result<()> {
+        let clock = Clock::get()?;
+        let now = clock.unix_timestamp;
+        let seconds_in_month: i64 = 30 * 24 * 60 * 60; // 2_592_000 seconds
+        let month_offset: i64 = i64::from(self.agreement.cancel_allowed_after)
+            .checked_mul(seconds_in_month)
+            .ok_or(ErrorCode::Overflow)?;
+        let canceled_allowed_after = self
+            .agreement
+            .start_date
+            .checked_add(month_offset)
+            .ok_or(ErrorCode::Overflow)?;
+
+        if now >= canceled_allowed_after {
+            self.transfer_deposit()?;
+        } else {
+            self.transfer_deposit_penalty()?;
+        }
+
+        Ok(())
+    }
+
+    pub fn transfer_deposit(&mut self) -> Result<()> {
         let agreement_address = self.agreement.key();
         let deposit_signer_seeds: &[&[&[u8]]] = &[&[
             b"deposit",
@@ -115,6 +137,54 @@ impl<'info> CloseAgreement<'info> {
         );
         transfer(transfer_deposit_fund_cpi, self.deposit_vault.lamports())?;
         msg!("Transferred deposit SOL!");
+        Ok(())
+    }
+
+    pub fn transfer_deposit_penalty(&mut self) -> Result<()> {
+        let agreement_address = self.agreement.key();
+        let deposit_signer_seeds: &[&[&[u8]]] = &[&[
+            b"deposit",
+            agreement_address.as_ref(),
+            &[self.agreement.deposit_bump],
+        ]];
+
+        let transfer_deposit_fund_accounts = Transfer {
+            from: self.deposit_vault.to_account_info(),
+            to: self.signer.to_account_info(),
+        };
+        let transfer_deposit_fund_cpi = CpiContext::new_with_signer(
+            self.system_program.to_account_info(),
+            transfer_deposit_fund_accounts,
+            deposit_signer_seeds,
+        );
+        let fine_fee = self
+            .agreement
+            .deposit_amount
+            .checked_mul(u64::from(self.agreement.cancel_penalty_percent))
+            .and_then(|v| v.checked_div(100))
+            .ok_or(ErrorCode::Overflow)?;
+        let renter_deposit_amount = self
+            .deposit_vault
+            .lamports()
+            .checked_sub(fine_fee)
+            .ok_or(ErrorCode::DepositFundsLow)?;
+        transfer(transfer_deposit_fund_cpi, renter_deposit_amount)?;
+        msg!("Transferred deposit SOL to renter!");
+
+        let transfer_deposit_to_landlord_accounts = Transfer {
+            from: self.deposit_vault.to_account_info(),
+            to: self.landlord.to_account_info(),
+        };
+        let transfer_deposit_to_landlord_cpi = CpiContext::new_with_signer(
+            self.system_program.to_account_info(),
+            transfer_deposit_to_landlord_accounts,
+            deposit_signer_seeds,
+        );
+        transfer(
+            transfer_deposit_to_landlord_cpi,
+            self.deposit_vault.lamports(),
+        )?;
+        msg!("Transferred deposit SOL to landlord!");
         Ok(())
     }
 
