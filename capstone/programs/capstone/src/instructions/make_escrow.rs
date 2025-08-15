@@ -29,8 +29,8 @@ pub struct MakeEscrow<'info> {
         init,
         payer=landlord,
         mint::decimals=0,
-        mint::authority=collection_mint,
-        mint::freeze_authority=collection_mint,
+        mint::authority=landlord,
+        mint::freeze_authority=landlord,
         mint::token_program=token_program,
         seeds=[b"edition",collection_mint.key().as_ref()],
         bump
@@ -99,40 +99,32 @@ pub struct MakeEscrow<'info> {
 impl<'info> MakeEscrow<'info> {
     pub fn mint_edition_nft(
         &mut self,
-        bumps: &MakeEscrowBumps,
         name: String,
         symbol: String,
         uri: String,
     ) -> Result<()> {
         //To-Do add safety checks if an escrow or agreement already exists
 
-        let signer_seeds: &[&[&[u8]]] = &[&[
-            b"collection_mint",
-            self.landlord.key.as_ref(),
-            &[bumps.collection_mint],
-        ]];
-
         let mint_cpi_accounts = MintTo {
-            authority: self.collection_mint.to_account_info(),
+            authority: self.landlord.to_account_info(),
             mint: self.edition_mint.to_account_info(),
             to: self.vault.to_account_info(),
         };
 
-        let mint_cpi_ctx = CpiContext::new_with_signer(
+        let mint_cpi_ctx = CpiContext::new(
             self.token_program.to_account_info(),
             mint_cpi_accounts,
-            signer_seeds,
         );
-
         mint_to(mint_cpi_ctx, 1)?;
+        msg!("Minted Item NFT");
 
         let metadata_cpi_accounts = CreateMetadataAccountsV3 {
             metadata: self.metadata.to_account_info(),
             mint: self.edition_mint.to_account_info(),
-            mint_authority: self.collection_mint.to_account_info(),
+            mint_authority: self.landlord.to_account_info(),
             payer: self.landlord.to_account_info(),
             rent: self.rent.to_account_info(),
-            update_authority: self.collection_mint.to_account_info(),
+            update_authority: self.landlord.to_account_info(),
             system_program: self.system_program.to_account_info(),
         };
         let data_v2 = DataV2 {
@@ -145,18 +137,17 @@ impl<'info> MakeEscrow<'info> {
             uses: None,
         };
 
-        let metadata_cpi_ctx = CpiContext::new_with_signer(
+        let metadata_cpi_ctx = CpiContext::new(
             self.token_metadata_program.to_account_info(),
-            metadata_cpi_accounts,
-            &signer_seeds,
+            metadata_cpi_accounts
         );
-
         create_metadata_accounts_v3(metadata_cpi_ctx, data_v2, true, true, None)?;
+        msg!("Added metadata to Item NFT");
 
         let master_edition_cpi_accounts = CreateMasterEditionV3 {
             payer: self.landlord.to_account_info(),
             mint: self.edition_mint.to_account_info(),
-            edition: self.collection_master_edition.to_account_info(),
+            edition: self.master_edition.to_account_info(),
             mint_authority: self.landlord.to_account_info(),
             update_authority: self.landlord.to_account_info(),
             metadata: self.metadata.to_account_info(),
@@ -164,13 +155,12 @@ impl<'info> MakeEscrow<'info> {
             token_program: self.token_program.to_account_info(),
             system_program: self.system_program.to_account_info(),
         };
-
-        let master_edition_cpi_ctx = CpiContext::new_with_signer(
+        let master_edition_cpi_ctx = CpiContext::new(
             self.token_metadata_program.to_account_info(),
             master_edition_cpi_accounts,
-            &signer_seeds,
         );
         create_master_edition_v3(master_edition_cpi_ctx, Some(0))?;
+        msg!("Created Master edition of Item NFT");
 
         let verify_sized_collection_accounts = SetAndVerifySizedCollectionItem {
             metadata: self.metadata.to_account_info(),
@@ -181,13 +171,13 @@ impl<'info> MakeEscrow<'info> {
             collection_master_edition: self.collection_master_edition.to_account_info(),
             collection_mint: self.collection_mint.to_account_info(),
         };
-        let verify_sized_collection_cpi = CpiContext::new_with_signer(
+        let verify_sized_collection_cpi = CpiContext::new(
             self.token_metadata_program.to_account_info(),
-            verify_sized_collection_accounts,
-            &signer_seeds,
+            verify_sized_collection_accounts
         );
 
         set_and_verify_sized_collection_item(verify_sized_collection_cpi, None)?;
+        msg!("Verified Item NFT");
         Ok(())
     }
 

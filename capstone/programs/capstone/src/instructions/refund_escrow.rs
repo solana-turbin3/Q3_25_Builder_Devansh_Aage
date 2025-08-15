@@ -15,13 +15,13 @@ pub struct Refund<'info> {
     #[account(
         mut,
         close=landlord,
-        has_one=landlord,
         seeds=[b"escrow",edition_mint.key().as_ref()],
         bump=escrow.bump,
     )]
     pub escrow: Account<'info, Escrow>,
 
     #[account(
+        mut,
         mint::token_program=token_program,
         seeds=[b"edition",collection_mint.key().as_ref()],
         bump=escrow.edition_mint_bump
@@ -55,10 +55,9 @@ pub struct Refund<'info> {
     pub vault: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
+        mut,
         mint::token_program=token_program,
         mint::decimals=0,
-        mint::authority=landlord,
-        mint::freeze_authority=landlord,
     )]
     pub collection_mint: InterfaceAccount<'info, Mint>,
 

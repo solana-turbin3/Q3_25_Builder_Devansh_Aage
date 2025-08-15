@@ -29,7 +29,6 @@ pub struct Take<'info> {
     #[account(
         mut,
         close=landlord,
-        has_one=landlord,
         seeds=[b"escrow",edition_mint.key().as_ref()],
         bump=escrow.bump,
     )]

@@ -56,7 +56,7 @@ pub mod capstone {
         )?;
         msg!("Init Escrow PDA!");
         ctx.accounts
-            .mint_edition_nft(&ctx.bumps, nft_name, nft_symbol, nft_uri)?;
+            .mint_edition_nft(nft_name, nft_symbol, nft_uri)?;
         msg!("Minted Printable NFT PDA!");
         Ok(())
     }
@@ -74,6 +74,24 @@ pub mod capstone {
         msg!("Transfer Deposit");
         ctx.accounts.transfer_nft()?;
         msg!("Transfer NFT");
+        Ok(())
+    }
+
+    pub fn pay_monthly_rent(ctx: Context<MonthlyRent>) -> Result<()> {
+        ctx.accounts.pay_rent()?;
+        msg!("Paid Rent");
+        ctx.accounts.add_record_and_increment_score()?;
+        msg!("Increment score of renter");
+        Ok(())
+    }
+
+    pub fn pay_rent_from_deposit(ctx: Context<PayFromDeposit>) -> Result<()> {
+        ctx.accounts.pay_from_deposit()?;
+        Ok(())
+    }
+
+    pub fn close_agreement_transfer_nft(ctx: Context<CloseAgreement>) -> Result<()> {
+        ctx.accounts.close_agreement()?;
         Ok(())
     }
 }
