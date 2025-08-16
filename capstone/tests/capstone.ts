@@ -10,6 +10,7 @@ import {
 } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
+import fs from "fs";
 const { LAMPORTS_PER_SOL } = anchor.web3;
 
 describe("capstone", () => {
@@ -35,8 +36,13 @@ describe("capstone", () => {
   const ITEM_NFT_URI =
     "https://raw.githubusercontent.com/Devansh-Aage/SPL-token/refs/heads/main/member_nft.json";
 
-  const landlord = anchor.web3.Keypair.generate();
-  const renter = anchor.web3.Keypair.generate();
+
+  const landlord = anchor.web3.Keypair.fromSecretKey(
+    new Uint8Array(JSON.parse(fs.readFileSync("./id.json", "utf-8")))
+  );
+  const renter = anchor.web3.Keypair.fromSecretKey(
+    new Uint8Array(JSON.parse(fs.readFileSync("./phantom.json", "utf-8")))
+  );
 
   let shared: {
     collectionMintPDA: PublicKey;
@@ -96,18 +102,6 @@ describe("capstone", () => {
       agreementPDA: agreement,
       renterPDA: renterPDA,
     };
-
-    const sig = await provider.connection.requestAirdrop(
-      landlord.publicKey,
-      6 * anchor.web3.LAMPORTS_PER_SOL
-    );
-    await provider.connection.confirmTransaction(sig);
-
-    const renterSig = await provider.connection.requestAirdrop(
-      renter.publicKey,
-      6 * anchor.web3.LAMPORTS_PER_SOL
-    );
-    await provider.connection.confirmTransaction(renterSig);
   });
 
   it("mint collection NFT for landlord", async () => {
@@ -153,7 +147,7 @@ describe("capstone", () => {
       .signers([landlord])
       .rpc();
     console.log(
-      `Collection NFT transaction at https://explorer.solana.com/tx/${tx}?cluster=custom`
+      `Collection NFT transaction at https://explorer.solana.com/tx/${tx}?cluster=devnet`
     );
   });
 
@@ -168,7 +162,7 @@ describe("capstone", () => {
       .signers([renter])
       .rpc();
     console.log(
-      `Init renter PDA transaction at https://explorer.solana.com/tx/${tx}?cluster=custom`
+      `Init renter PDA transaction at https://explorer.solana.com/tx/${tx}?cluster=devnet`
     );
   });
 
@@ -225,7 +219,7 @@ describe("capstone", () => {
       { skipPreflight: true }
     );
     console.log(
-      `Init Escrow transaction https://explorer.solana.com/tx/${signature}?cluster=custom`
+      `Init Escrow transaction https://explorer.solana.com/tx/${signature}?cluster=devnet`
     );
   });
 
@@ -288,7 +282,7 @@ describe("capstone", () => {
   //     .rpc();
 
   //   console.log(
-  //     `Close escrow transaction at https://explorer.solana.com/tx/${closeEscrowTx}?cluster=custom`
+  //     `Close escrow transaction at https://explorer.solana.com/tx/${closeEscrowTx}?cluster=devnet`
   //   );
   // });
 
@@ -329,7 +323,7 @@ describe("capstone", () => {
       .signers([renter])
       .rpc();
     console.log(
-      `Init agreement transaction at https://explorer.solana.com/tx/${tx}?cluster=custom`
+      `Init agreement transaction at https://explorer.solana.com/tx/${tx}?cluster=devnet`
     );
   });
 
@@ -355,7 +349,7 @@ describe("capstone", () => {
       .signers([renter])
       .rpc();
     console.log(
-      `Renter pays monthly payment PDA transaction at https://explorer.solana.com/tx/${tx}?cluster=custom`
+      `Renter pays monthly payment PDA transaction at https://explorer.solana.com/tx/${tx}?cluster=devnet`
     );
   });
 
@@ -408,7 +402,7 @@ describe("capstone", () => {
       .signers([renter])
       .rpc();
     console.log(
-      `Close agreement transaction at https://explorer.solana.com/tx/${tx}?cluster=custom`
+      `Close agreement transaction at https://explorer.solana.com/tx/${tx}?cluster=devnet`
     );
   });
 });
