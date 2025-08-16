@@ -292,7 +292,6 @@ describe("capstone", () => {
   //   );
   // });
 
-
   it("accept escrow and init agreement", async () => {
     const vaultATA = await getAssociatedTokenAddress(
       shared.editionMintPDA,
@@ -334,36 +333,7 @@ describe("capstone", () => {
     );
   });
 
-  it("renter pays monthly rent on time", async () => {
-    const tx = await program.methods
-      .payMonthlyRent()
-      .accountsStrict({
-        agreement: shared.agreementPDA,
-        landlord: landlord.publicKey,
-        renter: shared.renterPDA,
-        signer: renter.publicKey,
-        systemProgram: SYSTEM_PROGRAM_ID,
-      })
-      .signers([renter])
-      .rpc();
-    console.log(
-      `Renter pays monthly payment PDA transaction at https://explorer.solana.com/tx/${tx}?cluster=custom`
-    );
-  });
-
-  it("check renter's score and agreement record after rent paid on time", async () => {
-    try {
-      const renterAccount = await program.account.renter.fetch(
-        shared.renterPDA
-      );
-      console.log("Renter PDA:\n", renterAccount);
-    } catch (error) {
-      console.error("Renter account not found or invalid!");
-      throw error;
-    }
-  });
-
-  it("renter missed payment, rent paid from deposit", async () => {
+  it("renter pays monthly rent", async () => {
     const depositSeeds = [
       Buffer.from("deposit"),
       shared.agreementPDA.toBuffer(),
@@ -373,23 +343,23 @@ describe("capstone", () => {
       program.programId
     );
     const tx = await program.methods
-      .payRentFromDeposit()
+      .payRent()
       .accountsStrict({
-        agreement: shared.agreementPDA,
-        landlord: landlord.publicKey,
-        renter: shared.renterPDA,
-        depositVault: depositPDA,
         signer: renter.publicKey,
+        landlord: landlord.publicKey,
+        depositVault: depositPDA,
+        agreement: shared.agreementPDA,
+        renter: shared.renterPDA,
         systemProgram: SYSTEM_PROGRAM_ID,
       })
       .signers([renter])
       .rpc();
     console.log(
-      `Renter pays monthly payment from deposit PDA transaction at https://explorer.solana.com/tx/${tx}?cluster=custom`
+      `Renter pays monthly payment PDA transaction at https://explorer.solana.com/tx/${tx}?cluster=custom`
     );
   });
 
-  it("check renter's score and agreement record after rent payment delayed", async () => {
+  it("check renter's score and agreement record after paying rent", async () => {
     try {
       const renterAccount = await program.account.renter.fetch(
         shared.renterPDA

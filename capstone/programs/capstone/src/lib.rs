@@ -77,16 +77,8 @@ pub mod capstone {
         Ok(())
     }
 
-    pub fn pay_monthly_rent(ctx: Context<MonthlyRent>) -> Result<()> {
-        ctx.accounts.pay_rent()?;
-        msg!("Paid Rent");
-        ctx.accounts.add_record_and_increment_score()?;
-        msg!("Increment score of renter");
-        Ok(())
-    }
-
-    pub fn pay_rent_from_deposit(ctx: Context<PayFromDeposit>) -> Result<()> {
-        ctx.accounts.pay_from_deposit()?;
+    pub fn pay_rent(ctx: Context<MonthlyRent>) -> Result<()> {
+        ctx.accounts.monthly_rent()?;
         Ok(())
     }
 
