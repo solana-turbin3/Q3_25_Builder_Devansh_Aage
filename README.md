@@ -35,4 +35,4 @@ This repository contains the projects and exercises completed during Turbin3 Q3 
 ### Week 5: Capstone
 
 -  [**capstone/**](./capstone)  
-   A decentralized rental platform on Solana that secures deposits in escrow, enables transparent rent payments, builds renter credit scores, and represents rental agreements as NFTs.
+   A decentralized rental platform on Solana that secures deposits in program controlled vault, enables transparent rent payments, builds renter credit scores, and represents rental agreements as NFTs.
